@@ -1,96 +1,51 @@
 '''
 By Andy Stokely
 '''
+
 from collections import namedtuple
+from collections.abc import Mapping, Iterable
 import numpy as np
 from typing import Optional, TypeVar, Hashable, \
 	Dict, Iterable, Union, Tuple, List, Any, Generator
+from .exceptions import DunderDecoratorException, \
+	AttributeException, ClassObjectException	
 
 Cls = TypeVar('User Defined Class')
 
-class TypeList(list):
-
-    def __init__(self, iterable, exclude_type):
-        self.exclude_type = exclude_type
-        super().__init__([
-            i for i in iterable
-            if not isinstance(i, exclude_type
-        )])
-
-    def append(self, val):
-        if self.exclude_type == int:
-            if isinstance(bool):
-                super().append(value)
-        if isinstance(self.exclude_type):
-            return
-        super().append(value)
-
-    def __setitem__(self, index, val):
-        if self.exclude_type == int:
-            if isinstance(key, bool):
-                super().__setitem__(key, value)
-        if isinstance(key, self.exclude_type):
-            return
-        super().__setitem__(key, value)
 
 def dunder_iter(
 		cls: Optional[Cls] = None, 
-		iter_return: Optional[str] = (
-			'attr_or_field_and_value'
-		),
-		iter_attr: Optional[Iterable] = False,
-		iter_field: Optional[Iterable] = False,
+		attr: Optional[str] = None,
+		slots: Optional[str] = None,
 ) -> Cls:
 	def wrap(
 			cls: Cls,
 	) -> Cls:
-		iterate_over_field_or_attr = TypeList(
-			[iter_attr, iter_field], 
-			bool
-		)
-		if iterate_over_field_or_attr:
-			def __iter__(
+		if attr is None:
+			if slots is None:
+				def __iter__(
 						cls: Cls
 				) -> Generator:
-				iter_ = iterate_over_field_or_attr[0]
-				iter_ = getattr(cls, iter_)
-				if isinstance(iter_, dict):
-					for k, v in iter_.items():
-						yield k, v
-				else:
-					for i in iter_:
-						yield i
+					if hasattr(cls, '__dict__'):
+						for k, v in cls.__dict__.items():
+							yield k, v
+					else:
+						raise ClassObjectException(cls, 'dict') 
 			setattr(cls, '__iter__', __iter__)
 		else:
-			if iter_return == 'attr_or_field_and_value':
-				def __iter__(
-						cls: Cls
-				) -> Generator:
-					for k, v in cls.__dict__.items():
+			def __iter__(
+					cls: Cls
+			) -> Generator:
+				iter_attr = getattr(cls, attr)
+				if isinstance(iter_attr, Mapping):
+					for k, v in iter_attr.items():
 						yield k, v
-				setattr(cls, '__iter__', __iter__)
-			elif iter_return == 'attr':
-				def __iter__(
-						cls: Cls
-				) -> Generator:
-					for field in cls.__dict__.keys():
-						yield field
-				setattr(cls, '__iter__', __iter__)
-			elif iter_return == 'field':
-				def __iter__(
-						cls: Cls
-				) -> Generator:
-					for field in cls.__dict__.keys():
-						yield field
-				setattr(cls, '__iter__', __iter__)
-			elif iter_return == 'value':
-				def __iter__(
-						cls: Cls
-				) -> Generator:
-					for value in cls.__dict__.values():
-						yield value
-
-				setattr(cls, '__iter__', __iter__)
+				elif isinstance(iter_attr, Iterable):
+					for i in iter_attr:
+						yield i 
+				else:
+					raise AttributeException(cls, attr, 'iterable') 
+			setattr(cls, '__iter__', __iter__)
 		return cls
 	if cls is None:
 		return wrap 
