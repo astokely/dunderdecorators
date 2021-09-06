@@ -8,7 +8,10 @@ setup(
     author_email='amstokely@ucsd.edu',
     license='MIT',
     packages=find_packages(),
-    install_requires=["typing"],              
+    install_requires=[
+		"typing",
+		"pytest"
+	],              
     platforms=['Linux',
                 'Unix',],
     python_requires=">=3.8",          
