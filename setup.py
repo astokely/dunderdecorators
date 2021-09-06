@@ -10,7 +10,8 @@ setup(
     packages=find_packages(),
     install_requires=[
 		"typing",
-		"pytest"
+		"pytest",
+		"numpy",
 	],              
     platforms=['Linux',
                 'Unix',],
