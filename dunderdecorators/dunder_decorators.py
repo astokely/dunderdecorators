@@ -7,9 +7,7 @@ from collections.abc import Mapping, Iterable
 import numpy as np
 from typing import Optional, TypeVar, Hashable, \
 	Dict, Iterable, Union, Tuple, List, Any, Generator
-from .exceptions import DunderDecoratorException, \
-	AttributeException, ClassObjectException	
-
+from .exceptions import DunderIterError
 Cls = TypeVar('User Defined Class')
 
 
@@ -27,24 +25,34 @@ def dunder_iter(
 						cls: Cls
 				) -> Generator:
 					if hasattr(cls, '__dict__'):
-						for k, v in cls.__dict__.items():
-							yield k, v
+						for attr, value in cls.__dict__.items():
+							yield attr, value
 					else:
-						raise ClassObjectException(cls, 'dict') 
-			setattr(cls, '__iter__', __iter__)
+						raise DunderIterError(cls, 'dict') 
+				setattr(cls, '__iter__', __iter__)
+			else:
+				def __iter__(
+						cls: Cls
+				) -> Generator:
+					if hasattr(cls, '__slots__'):
+						for attr in cls.__slots__:
+							yield attr, getattr(cls, attr) 
+					else:
+						raise DunderIterError(cls, 'slots') 
+				setattr(cls, '__iter__', __iter__)
 		else:
 			def __iter__(
 					cls: Cls
 			) -> Generator:
 				iter_attr = getattr(cls, attr)
 				if isinstance(iter_attr, Mapping):
-					for k, v in iter_attr.items():
-						yield k, v
+					for key, value in iter_attr.items():
+						yield key, value
 				elif isinstance(iter_attr, Iterable):
 					for i in iter_attr:
 						yield i 
 				else:
-					raise AttributeException(cls, attr, 'iterable') 
+					raise DunderIterError(cls, 'iterable', attr) 
 			setattr(cls, '__iter__', __iter__)
 		return cls
 	if cls is None:
