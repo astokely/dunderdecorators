@@ -15,5 +15,5 @@ setup(
 	],              
     platforms=['Linux',
                 'Unix',],
-    python_requires=">=3.5.4",          
+    python_requires=">=3.6",          
 )
