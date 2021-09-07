@@ -14,7 +14,7 @@ Cls = TypeVar('User Defined Class')
 def dunder_iter(
 		cls: Optional[Cls] = None, 
 		attr: Optional[str] = None,
-		slots: Optional[str] = None,
+		slots: Optional[bool] = None,
 ) -> Cls:
 	def wrap(
 			cls: Cls,
@@ -70,7 +70,7 @@ def dunder_iter(
 def dunder_setitem(
 		cls: Optional[Cls] = None, 
 		attr: Optional[str] = False, 
-		slots: Optional[str] = None,
+		slots: Optional[bool] = None,
 ) -> Cls:
 	def wrap(
 			cls: Cls,
@@ -81,14 +81,24 @@ def dunder_setitem(
 					key: Hashable, 
 					value: Any,
 			) -> None:
-				if hasattr(getattr(cls, attr), '__getitem__'):
-					getattr(cls, attr)[key] = value
+				if isinstance(
+					key,
+					Hashable
+				): 
+					if hasattr(getattr(cls, attr), '__getitem__'):
+						getattr(cls, attr)[key] = value
+					else:
+						raise DunderDecoratorException(
+							cls, 
+							'indexable', 
+							attr
+						) 
 				else:
 					raise DunderDecoratorException(
 						cls, 
-						'indexable', 
-						attr
-					) 
+						'key_not_hashable', 
+						key
+					)
 				return
 			setattr(cls, '__setitem__', __setitem__)
 		else:
@@ -98,10 +108,22 @@ def dunder_setitem(
 						key: Hashable, 
 						value: Any,
 				) -> None:
-					if hasattr(cls, '__dict__'):
-						cls.__dict__[key] = value
+					if isinstance(
+						key,
+						Hashable
+					): 
+						if hasattr(cls, '__dict__'):
+							cls.__dict__[key] = value
+						else:
+							raise DunderDecoratorException(
+								cls, ('dict', 'setitem'), attr
+							)
 					else:
-						raise DunderDecoratorException('dict')
+						raise DunderDecoratorException(
+							cls, 
+							'key_not_hashable', 
+							key=key	
+						)
 					return
 				setattr(
 					cls, 
@@ -119,10 +141,12 @@ def dunder_setitem(
 							setattr(cls, key, value)
 						else:
 							raise DunderDecoratorException(
-								'slots_immutable'
+								cls, 'slots_immutable', attr
 							)
 					else:
-						raise DunderDecoratorException('slots')
+						raise DunderDecoratorException(
+							cls, ('slots', 'setitem'), attr
+						)
 					return
 				setattr(
 					cls, 
@@ -136,7 +160,8 @@ def dunder_setitem(
 
 def dunder_getitem(
 		cls: Optional[Cls] = None, 
-		attr: Optional[str] = False 
+		attr: Optional[str] = False,
+		slots: Optional[bool] = None,
 ) -> Cls:
 	def wrap(
 			cls: Cls,
@@ -147,33 +172,161 @@ def dunder_getitem(
 						cls: Cls, 
 						key: Hashable
 				) -> Any:
-					if key in getattr(cls, attr).keys():
-						return getattr(cls, attr)[key]
-					cls.__missing__(key)
-					return getattr(cls, attr)[key]
+					if isinstance(
+						key,
+						Hashable
+					): 
+						if hasattr(
+							getattr(cls, attr), 
+							'keys'
+						):
+							if key in getattr(cls, attr).keys():
+								return getattr(cls, attr)[key]
+							cls.__missing__(key)
+							return getattr(cls, attr)[key]
+						else:
+							raise DunderDecoratorException(
+								cls, 
+								'no_keys_method', 
+								attr
+							)
+					else:
+						raise DunderDecoratorException(
+							cls, 
+							'key_not_hashable', 
+							key	
+						)
 				setattr(cls, '__getitem__', __getitem__)
 			else:
 				def __getitem__(
 						cls: Cls, 
 						key: Hashable
 				) -> Any:
-					return getattr(cls, attr)[key]
+					if isinstance(
+						key,
+						Hashable
+					): 
+						if key in getattr(cls, attr).keys():
+							return getattr(cls, attr)[key]
+						else:
+							raise DunderDecoratorException(
+								cls, 
+								'key_not_found', 
+								attr
+							)
+					else:
+						raise DunderDecoratorException(
+							cls, 
+							'key_not_hashable', 
+							key	
+						)
 				setattr(cls, '__getitem__', __getitem__)
 		else:
 			if hasattr(cls, '__missing__'):
-				def __getitem__(
-						cls: Cls, 
-						key: Hashable
-				) -> Any:
-					if key in cls.__dict__.keys():
-						return cls.__dict__[key]
-					cls.__missing__(key)
-					return cls.__dict__[key]
+				if slots is None:
+					def __getitem__(
+							cls: Cls, 
+							key: Hashable
+					) -> Any:
+						if hasattr(cls, '__dict__'):
+							if isinstance(
+								key,
+								Hashable
+							): 
+								if key in cls.__dict__.keys():
+									return cls.__dict__[key]
+								cls.__missing__(key)
+								return cls.__dict__[key]
+							else:
+								raise DunderDecoratorException(
+									cls, 
+									'key_not_hashable', 
+									key	
+								)
+						else:
+							raise DunderDecoratorException(
+								cls,
+								('dict', 'getitem'),
+								attr
+							)
+				else:
+					raise DunderDecoratorException(
+						cls, 
+						'missing_with_slots', 
+						attr
+					)
 				setattr(cls, '__getitem__', __getitem__)
 			else:
-				def __getitem__(cls, key):
-					return cls.__dict__[key]
-				setattr(cls, '__getitem__', __getitem__)
+				if slots is None:
+					def __getitem__(
+							cls: Cls, 
+							key: Hashable,
+					) -> Any:
+						if hasattr(cls, '__dict__'):
+							if isinstance(
+								key,
+								Hashable
+							): 
+								if key in cls.__dict__.keys():
+									return cls.__dict__[key]
+								else:
+									raise DunderDecoratorException(
+										cls, 
+										'key_not_in_obj_dict', 
+										key	
+									)
+							else:
+								raise DunderDecoratorException(
+									cls, 
+									'key_not_hashable', 
+									key	
+								)
+						else:
+							raise DunderDecoratorException(
+								cls,
+								('dict', 'getitem'),
+								attr
+							)
+					setattr(
+						cls, 
+						'__getitem__', 
+						__getitem__
+					)
+				else:
+					def __getitem__(
+							cls: Cls, 
+							key: Hashable,
+					) -> Any:
+						if hasattr(cls, '__slots__'):
+							if isinstance(
+								key,
+								Hashable
+							): 
+								if key in cls.__slots__:
+									return getattr(cls, key) 
+								else:
+									raise DunderDecoratorException(
+										cls, 
+										'key_not_in_obj_slots', 
+										key	
+									)
+							else:
+								raise DunderDecoratorException(
+									cls, 
+									'key_not_hashable', 
+									key	
+								)
+						else:
+							raise DunderDecoratorException(
+								cls,
+								('slots', 'getitem'),
+								attr
+							)
+					setattr(
+						cls, 
+						'__getitem__', 
+						__getitem__
+					)
 		return cls
 	if cls is None:
 		return wrap 
@@ -183,6 +336,7 @@ def dunder_missing(
 		cls: Optional[Cls] = None, 
 		attr: Optional[str] = False,
 		default_value: Optional[Any] = None,	
+		slots: Optional[bool] = None
 ) -> Any:
 	def wrap(
 			cls: Cls,
@@ -197,15 +351,53 @@ def dunder_missing(
 					cls: Cls, 
 					key: Hashable,
 			) ->None:
-				getattr(cls, attr)[key] = cls.__default_value
-				return
+				if hasattr(getattr(cls, attr), '__getitem__'):
+					if isinstance(
+						key,
+						Hashable
+					): 
+						getattr(cls, attr)[key] = (
+							cls.__default_value
+						)
+						return
+					else:
+						raise DunderDecoratorException(
+							cls, 
+							'key_not_hashable', 
+							key	
+						)
+				else:
+					raise DunderDecoratorException(
+						cls, 
+						'indexable', 
+						attr
+					) 
 			setattr(cls, '__missing__', __missing__)
 		else:
 			def __missing__(
 					cls: Cls, 
 					key: Hashable,
 			) ->None:
-				cls.__dict__[key] = cls.__default_value
+				if hasattr(cls, '__dict__'):
+					if isinstance(
+						key,
+						Hashable
+					): 
+						cls.__dict__[key] = (
+							cls.__default_value
+						)
+					else:
+						raise DunderDecoratorException(
+							cls, 
+							'key_not_hashable', 
+							key	
+						)
+				else:
+					raise DunderDecoratorException(
+						cls,
+						('dict', 'missing'),
+						attr
+					)
 				return
 			setattr(cls, '__missing__', __missing__)
 		return cls
@@ -215,27 +407,56 @@ def dunder_missing(
 
 def dunder_repr(
 		cls: Optional[Cls] = None, 
+		slots: Optional[bool] = None,
 ) -> Any:
 	def wrap(
 			cls: Cls,
 	) -> Cls:
-		def __repr__(cls) -> Dict:
-			repr_cls_dict = {
-				(
-					attr if not str(attr)[0].isdigit() 
-					else f'{attr.__class__.__name__}_{attr}'
-				) : value for attr, value 
-				in cls.__dict__.items()
-			}
-			ReprNamedTuple = namedtuple(
-				cls.__class__.__name__, 
-				repr_cls_dict
-			)
-			repr_namedtuple = ReprNamedTuple(
-				**repr_cls_dict
-			)
-			return str(repr_namedtuple)
-		setattr(cls, '__repr__', __repr__)
+		if slots is None:
+			def __repr__(cls) -> Dict:
+				if hasattr(cls, '__dict__'):
+					repr_cls_dict = {
+						(
+							attr if not str(attr)[0].isdigit() 
+							else f'{attr.__class__.__name__}_{attr}'
+						) : value for attr, value 
+						in cls.__dict__.items()
+					}
+					ReprNamedTuple = namedtuple(
+						cls.__class__.__name__, 
+						repr_cls_dict
+					)
+					repr_namedtuple = ReprNamedTuple(
+						**repr_cls_dict
+					)
+					return str(repr_namedtuple)
+				else:
+					raise DunderDecoratorException(
+						cls,
+						('dict', 'repr'),
+					)
+			setattr(cls, '__repr__', __repr__)
+		else:
+			def __repr__(cls) -> Dict:
+				if hasattr(cls, '__slots__'):
+					repr_cls_dict = {
+						attr : getattr(cls, attr) 
+						for attr in cls.__slots__
+					}
+					ReprNamedTuple = namedtuple(
+						cls.__class__.__name__, 
+						repr_cls_dict
+					)
+					repr_namedtuple = ReprNamedTuple(
+						**repr_cls_dict
+					)
+					return str(repr_namedtuple)
+				else:
+					raise DunderDecoratorException(
+						cls,
+						('slots', 'repr'),
+					)
+			setattr(cls, '__repr__', __repr__)
 		return cls
 	if cls is None:
 		return wrap 

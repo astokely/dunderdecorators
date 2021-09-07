@@ -1,152 +1,488 @@
-import os
+from dunderdecorators import dunder_iter, dunder_setitem, \
+	dunder_getitem, dunder_missing, dunder_repr, \
+	DunderDecoratorException
 import pytest
-from typing import Callable
-from dunderdecorators import dunder_iter, dunder_getitem, \
-	dunder_setitem, dunder_missing, dunder_repr 
-from dunderdecorators import DunderDecoratorException 
+from typing import List, Dict
 
-def test_dunder_iter_no_params_positive(
-			dunder_iter_no_params: Callable, 
-) -> None:
-	dunder_iter_no_params.a = 1
-	dunder_iter_no_params.b = 2
-	dunder_iter_no_params.c = 3
-	attr_values = [i for i in dunder_iter_no_params]
-	assert attr_values == [('a', 1), ('b', 2), ('c', 3)]
-
-def test_dunder_iter_no_params_negative1(
-			dunder_iter_no_params: Callable, 
-) -> None:
-	dunder_iter_no_params.a = 1
-	dunder_iter_no_params.b = 2
-	dunder_iter_no_params.c = 3
-	attr_values = [i for i in dunder_iter_no_params]
-	assert attr_values != [1, 2, 3]
-
-def test_dunder_iter_no_params_negative2(
-			dunder_iter_no_params: Callable, 
-) -> None:
-	dunder_iter_no_params.a = 1
-	dunder_iter_no_params.b = 2
-	dunder_iter_no_params.c = 3
-	attr_values = [i for i in dunder_iter_no_params]
-	assert attr_values != ['a', 'b', 'c']
-
-def test_dunder_iter_no_params_has_iter(
-			dunder_iter_no_params: Callable, 
-) -> None:
-	assert hasattr(dunder_iter_no_params, '__iter__') == True	
-
-def test_dunder_iter_no_params_parent_inherit_iter_negative(
-			control: Callable
-) -> None:
-
+def test_dunder_iter():
 	@dunder_iter
-	class ControlChildWithDunderIter(type(control)):
-		pass	
-	control_child_with_dunder_iter = (
-		ControlChildWithDunderIter()
-	)
-	assert (
-		hasattr(control, '__iter__') == False and
-		hasattr(
-			control_child_with_dunder_iter, 
-			'__iter__'
-		) == True 
-	)
+	class Test(object):
 
-def test_dunder_iter_slots_no_iter_attrs(
-		dunder_iter_slots_no_iterable_attrs: Callable,
-) -> None:
-	attr_values = [
-		i for i in dunder_iter_slots_no_iterable_attrs
-	]
-	assert attr_values == [
-		('a', 1),
-		('b', 2.0),
-		('c', 3.0)
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+
+	test = Test(1, 2, 3)
+	test_values = [i for i in test]
+	assert test_values == [
+		('a', 1), 
+		('b', 2), 
+		('c', 3)
 	]
 
-def test_dunder_iter_slots_no_iter_attrs_negative1(
-		dunder_iter_slots_no_iterable_attrs: Callable,
-) -> None:
-	attr_values = [
-		i for i in dunder_iter_slots_no_iterable_attrs
-	]
-	assert attr_values != ['a', 'b', 'c']	
+def test_dunder_iter_with_non_mapping_attr():
+	@dunder_iter(attr='a')
+	class Test(object):
 
-def test_dunder_iter_slots_no_iter_attrs_negative2(
-		dunder_iter_slots_no_iterable_attrs: Callable,
-) -> None:
-	attr_values = [
-		i for i in dunder_iter_slots_no_iterable_attrs
-	]
-	assert attr_values != [1, 2.0, 3.0]
+		def __init__(
+				self,
+				a: List,
+		) -> None:
+			self.a = a
 
-def test_dunder_iter_no_slots_no_iter_attrs_exception(
-		dunder_iter_no_slots_no_iterable_attrs_exception: Callable,
-) -> None:
+	test = Test([1, 2, 3])
+	test_values = [i for i in test]
+	assert test_values == [1, 2, 3]
+
+def test_dunder_iter_with_mapping_attr():
+	@dunder_iter(attr='a')
+	class Test(object):
+
+		def __init__(
+				self,
+				a: Dict,
+		) -> None:
+			self.a = a
+
+	test = Test({
+		'a' : 1, 
+		'b' : 2, 
+		'c' : 3
+	})
+	test_values = {k : v for k, v in test}
+	assert test_values == {
+		'a' : 1, 
+		'b' : 2, 
+		'c' : 3
+	}
+
+def test_dunder_iter_slots_exception():
+	@dunder_iter(slots=True)
+	class Test(object):
+
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+
+	test = Test(1, 2, 3)
 	with pytest.raises(DunderDecoratorException) as exception_info:
-		attr_values = [
-			i for i in dunder_iter_no_slots_no_iterable_attrs_exception
-		]
-	assert (
-		('slots', 'iter') == exception_info.value.message and  
-		('dict', 'iter') != exception_info.value.message and
-		'iterable' != exception_info.value.message
-	)
+		test_values = [i for i in test]
+	assert exception_info.value.message == ('slots', 'iter')
 
-def test_dunder_iter_slots_with_iter_attrs_exception(
-		dunder_iter_slots_with_iterable_attrs_exception: Callable,
-) -> None:
+def test_dunder_iter_iterable_attr_exception():
+	@dunder_iter(attr='a')
+	class Test(object):
+
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+
+	test = Test(1, 2, 3)
 	with pytest.raises(DunderDecoratorException) as exception_info:
-		attr_values = [
-			i for i in dunder_iter_slots_with_iterable_attrs_exception
-		]
-	assert (
-		('slots', 'iter') != exception_info.value.message and  
-		('dict', 'iter') != exception_info.value.message and
-		'iterable' == exception_info.value.message
-	)
+		test_values = [i for i in test]
+	assert exception_info.value.message == ('iterable')
 
-def test_dunder_iter_slots_with_iter_attrs(
-		dunder_iter_slots_with_iterable_attrs: Callable,
-) -> None:
-	attr_values = [
-		i for i in dunder_iter_slots_with_iterable_attrs
+def test_dunder_iter_with_slots():
+	@dunder_iter(slots=True)
+	class Test(object):
+		__slots__ = ('a', 'b', 'c')
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+
+	test = Test(1, 2, 3)
+	test_values = [i for i in test]
+	assert test_values == [
+		('a', 1), 
+		('b', 2), 
+		('c', 3)
 	]
-	assert attr_values == list(range(10))
 
-def test_dunder_iter_with_iter_attrs(
-		dunder_iter_with_iterable_attrs: Callable,
-) -> None:
-	attr_values = [
-		i for i in dunder_iter_with_iterable_attrs
+def test_dunder_iter_with_slots_and_attr():
+	@dunder_iter(attr='a')
+	class Test(object):
+		__slots__ = ('a',)
+		def __init__(
+				self,
+				a: List,
+		) -> None:
+			self.a = a
+
+	test = Test([1, 2, 3])
+	test_values = [i for i in test]
+	assert test_values == [1, 2, 3]
+
+def test_dunder_iter_with_slots_dict_exception():
+	@dunder_iter
+	class Test(object):
+		__slots__ = ('a', 'b', 'c')
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+
+	test = Test(1, 2, 3)
+	with pytest.raises(DunderDecoratorException) as exception_info:
+		test_values = [i for i in test]
+	assert exception_info.value.message == ('dict', 'iter')
+
+def test_dunder_iter_with_slots_iterable_attr_exception():
+	@dunder_iter(slots=True, attr='a')
+	class Test(object):
+		__slots__ = ('a', 'b', 'c')
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+
+def test_dunder_iter_with_slots_and_iter_slots_declaration():
+	@dunder_iter(attr='a')
+	class Test(object):
+		__slots__ = ('a',)
+		def __init__(
+				self,
+				a: List,
+		) -> None:
+			self.a = a
+
+	test = Test([1, 2, 3])
+	test_values = [i for i in test]
+	assert test_values == [1, 2, 3]
+
+def test_dunder_setitem():
+	@dunder_setitem
+	class Test(object):
+
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+
+	test = Test(1, 2, 3)
+	test['a'] = 3
+	test['b'] = 2
+	test['c'] = 1
+	assert (
+		[test.a, test.b, test.c] == 
+		[3, 2, 1]
+	)
+
+def test_dunder_setitem_with_non_mapping_attr():
+	@dunder_setitem(attr='a')
+	class Test(object):
+
+		def __init__(
+				self,
+				a: List,
+		) -> None:
+			self.a = a
+
+	test = Test([1, 2, 3])
+	test[0] = 3
+	test[1] = 2
+	test[2] = 1
+	assert (
+		test.a == 
+		[3, 2, 1]
+	)
+
+def test_dunder_iter_with_mapping_attr():
+	@dunder_setitem(attr='a')
+	class Test(object):
+
+		def __init__(
+				self,
+				a: Dict,
+		) -> None:
+			self.a = a
+
+	test = Test({
+		'a' : 1, 
+		'b' : 2, 
+		'c' : 3
+	})
+	test['a'] = 3
+	test['b'] = 2
+	test['c'] = 1
+	assert test.a == {
+		'a' : 3, 
+		'b' : 2, 
+		'c' : 1
+	}
+
+def test_dunder_setitem_with_slots():
+	@dunder_setitem(slots=True)
+	class Test(object):
+		__slots__ = ('a', 'b', 'c')
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+
+	test = Test(1, 2, 3)
+	test['a'] = 3
+	test['b'] = 2
+	test['c'] = 1
+	assert (
+		[test.a, test.b, test.c] == 
+		[3, 2, 1]
+	)
+
+def test_dunder_setitem_with_slots_and_non_mapping_attr():
+	@dunder_setitem(attr='a', slots=True)
+	class Test(object):
+
+		def __init__(
+				self,
+				a: List,
+		) -> None:
+			self.a = a
+
+	test = Test([1, 2, 3])
+	test[0] = 3
+	test[1] = 2
+	test[2] = 1
+	assert (
+		test.a == 
+		[3, 2, 1]
+	)
+
+def test_dunder_setitem_with_slots_and_mapping_attr():
+	@dunder_setitem(attr='a', slots=True)
+	class Test(object):
+
+		def __init__(
+				self,
+				a: Dict,
+		) -> None:
+			self.a = a
+
+	test = Test({
+		'a' : 1, 
+		'b' : 2, 
+		'c' : 3
+	})
+	test['a'] = 3
+	test['b'] = 2
+	test['c'] = 1
+	assert test.a == {
+		'a' : 3, 
+		'b' : 2, 
+		'c' : 1
+	}
+
+def test_dunder_setitem_indexing_exception():
+	@dunder_setitem(attr='a')
+	class Test(object):
+
+		def __init__(
+				self,
+				a: int,
+		) -> None:
+			self.a = a
+	test = Test(1)
+	exception_key_words = [
+		'Attribute',
+		'belonging',
+		'indexable',
+		'attr',
+		'name',
+		'owned',
+		'without',
+		'parameters',
+		'__dict__',
 	]
-	assert attr_values == list(range(10))
-
-def test_dunder_iter_with_no_iter_attrs_exception(
-		dunder_iter_with_no_iterable_attrs_exception: Callable,
-) -> None:
+	exception_null_key_words = [
+		'list',
+		'provided',	
+		'slots',	
+	]
 	with pytest.raises(DunderDecoratorException) as exception_info:
-		attr_values = [
-			i for i in dunder_iter_with_no_iterable_attrs_exception
-		]
-	assert (
-		('slots', 'iter') != exception_info.value.message and  
-		('dict', 'iter') != exception_info.value.message and
-		'iterable' == exception_info.value.message
-	)
+		test[0] = 3
+	assert exception_info.value.message == 'indexable'
+	for key_word in exception_key_words:
+		assert key_word in str(exception_info.value)
+	for key_word in exception_null_key_words:
+		assert key_word not in str(exception_info.value)
 
-def test_dunder_iter_no_slots(
-		dunder_iter_with_no_slots_exception: Callable,
-) -> None:
+def test_dunder_setitem_indexing_has_iterable_attr_exception():
+	@dunder_setitem(attr='a')
+	class Test(object):
+
+		def __init__(
+				self,
+				a: int,
+				b: List,
+		) -> None:
+			self.a = a
+			self.b = b
+	test = Test(1, [1, 2, 3])
+	exception_key_words = [
+		'Attribute',
+		'belonging',
+		'indexable',
+		'attr',
+		'name',
+		'owned',
+		'without',
+		'parameters',
+		'__dict__',
+		'list',
+		'provided',
+	]
+	exception_null_key_words = [
+		'slots',	
+	]
 	with pytest.raises(DunderDecoratorException) as exception_info:
-		attr_values = [
-			i for i in dunder_iter_with_no_slots_exception
-		]
-	assert (
-		('slots', 'iter') != exception_info.value.message and  
-		('dict', 'iter') == exception_info.value.message and
-		'iterable' != exception_info.value.message
-	)
+		test[0] = 3
+	assert exception_info.value.message == 'indexable'
+	for key_word in exception_key_words:
+		assert key_word in str(exception_info.value)
+	
+def test_dunder_setitem_indexing_with_slots_exception():
+	@dunder_setitem(attr='a')
+	class Test(object):
+		__slots__ = ('a',)
+
+		def __init__(
+				self,
+				a: int,
+		) -> None:
+			self.a = a
+	test = Test(1)
+	exception_key_words = [
+		'Attribute',
+		'belonging',
+		'indexable',
+		'attr',
+		'name',
+		'owned',
+		'slots',	
+		'True',
+	]
+	exception_null_key_words = [
+		'without',
+		'parameters',
+		'__dict__',
+		'list',
+		'provided',	
+	]
+	with pytest.raises(DunderDecoratorException) as exception_info:
+		test[0] = 3
+	assert exception_info.value.message == 'indexable'
+	for key_word in exception_key_words:
+		assert key_word in str(exception_info.value)
+	for key_word in exception_null_key_words:
+		assert key_word not in str(exception_info.value)
+
+def test_dunder_setitem_indexing_with_slots_and_iterable_attr_exception():
+	@dunder_setitem(attr='a')
+	class Test(object):
+		__slots__ = ('a', 'b',)
+
+		def __init__(
+				self,
+				a: int,
+				b: List,
+		) -> None:
+			self.a = a
+			self.b = b
+	test = Test(1, [1, 2, 3])
+	exception_key_words = [
+		'Attribute',
+		'belonging',
+		'indexable',
+		'attr',
+		'name',
+		'owned',
+		'slots',
+		'list',
+		'provided',
+	]
+	exception_null_key_words = [
+		'parameters',
+		'__dict__',	
+		'without',
+	]
+	with pytest.raises(DunderDecoratorException) as exception_info:
+		test[0] = 3
+	assert exception_info.value.message == 'indexable'
+	for key_word in exception_key_words:
+		assert key_word in str(exception_info.value)
+	for key_word in exception_null_key_words:
+		assert key_word not in str(exception_info.value)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
