@@ -4,7 +4,7 @@ import pytest
 from typing import Callable
 from dunderdecorators import dunder_iter, dunder_getitem, \
 	dunder_setitem, dunder_missing, dunder_repr 
-from dunderdecorators import DunderIterError 
+from dunderdecorators import DunderDecoratorException 
 
 def test_dunder_iter_no_params_positive(
 			dunder_iter_no_params: Callable, 
@@ -84,30 +84,30 @@ def test_dunder_iter_slots_no_iter_attrs_negative2(
 	]
 	assert attr_values != [1, 2.0, np.float64(3.0)]
 
-def test_dunder_iter_no_slots_no_iter_attrs_error(
-		dunder_iter_no_slots_no_iterable_attrs_error: Callable,
+def test_dunder_iter_no_slots_no_iter_attrs_exception(
+		dunder_iter_no_slots_no_iterable_attrs_exception: Callable,
 ) -> None:
-	with pytest.raises(DunderIterError) as error_info:
+	with pytest.raises(DunderDecoratorException) as exception_info:
 		attr_values = [
-			i for i in dunder_iter_no_slots_no_iterable_attrs_error
+			i for i in dunder_iter_no_slots_no_iterable_attrs_exception
 		]
 	assert (
-		'slots' == error_info.value.message and  
-		'dict' != error_info.value.message and
-		'iterable' != error_info.value.message
+		('slots', 'iter') == exception_info.value.message and  
+		('dict', 'iter') != exception_info.value.message and
+		'iterable' != exception_info.value.message
 	)
 
-def test_dunder_iter_slots_with_iter_attrs_error(
-		dunder_iter_slots_with_iterable_attrs_error: Callable,
+def test_dunder_iter_slots_with_iter_attrs_exception(
+		dunder_iter_slots_with_iterable_attrs_exception: Callable,
 ) -> None:
-	with pytest.raises(DunderIterError) as error_info:
+	with pytest.raises(DunderDecoratorException) as exception_info:
 		attr_values = [
-			i for i in dunder_iter_slots_with_iterable_attrs_error
+			i for i in dunder_iter_slots_with_iterable_attrs_exception
 		]
 	assert (
-		'slots' != error_info.value.message and  
-		'dict' != error_info.value.message and
-		'iterable' == error_info.value.message
+		('slots', 'iter') != exception_info.value.message and  
+		('dict', 'iter') != exception_info.value.message and
+		'iterable' == exception_info.value.message
 	)
 
 def test_dunder_iter_slots_with_iter_attrs(
@@ -126,28 +126,28 @@ def test_dunder_iter_with_iter_attrs(
 	]
 	assert attr_values == list(range(10))
 
-def test_dunder_iter_with_no_iter_attrs_error(
-		dunder_iter_with_no_iterable_attrs_error: Callable,
+def test_dunder_iter_with_no_iter_attrs_exception(
+		dunder_iter_with_no_iterable_attrs_exception: Callable,
 ) -> None:
-	with pytest.raises(DunderIterError) as error_info:
+	with pytest.raises(DunderDecoratorException) as exception_info:
 		attr_values = [
-			i for i in dunder_iter_with_no_iterable_attrs_error
+			i for i in dunder_iter_with_no_iterable_attrs_exception
 		]
 	assert (
-		'slots' != error_info.value.message and  
-		'dict' != error_info.value.message and
-		'iterable' == error_info.value.message
+		('slots', 'iter') != exception_info.value.message and  
+		('dict', 'iter') != exception_info.value.message and
+		'iterable' == exception_info.value.message
 	)
 
 def test_dunder_iter_no_slots(
-		dunder_iter_with_no_slots_error: Callable,
+		dunder_iter_with_no_slots_exception: Callable,
 ) -> None:
-	with pytest.raises(DunderIterError) as error_info:
+	with pytest.raises(DunderDecoratorException) as exception_info:
 		attr_values = [
-			i for i in dunder_iter_with_no_slots_error
+			i for i in dunder_iter_with_no_slots_exception
 		]
 	assert (
-		'slots' != error_info.value.message and  
-		'dict' == error_info.value.message and
-		'iterable' != error_info.value.message
+		('slots', 'iter') != exception_info.value.message and  
+		('dict', 'iter') == exception_info.value.message and
+		'iterable' != exception_info.value.message
 	)

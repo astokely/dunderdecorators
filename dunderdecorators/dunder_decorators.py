@@ -7,7 +7,8 @@ from collections.abc import Mapping, Iterable
 import numpy as np
 from typing import Optional, TypeVar, Hashable, \
 	Dict, Iterable, Union, Tuple, List, Any, Generator
-from .exceptions import DunderIterError
+from .exceptions import DunderDecoratorException 
+
 Cls = TypeVar('User Defined Class')
 
 
@@ -28,7 +29,9 @@ def dunder_iter(
 						for attr, value in cls.__dict__.items():
 							yield attr, value
 					else:
-						raise DunderIterError(cls, 'dict') 
+						raise DunderDecoratorException(
+							cls, ('dict', 'iter')
+						) 
 				setattr(cls, '__iter__', __iter__)
 			else:
 				def __iter__(
@@ -38,7 +41,9 @@ def dunder_iter(
 						for attr in cls.__slots__:
 							yield attr, getattr(cls, attr) 
 					else:
-						raise DunderIterError(cls, 'slots') 
+						raise DunderDecoratorException(
+							cls, ('slots', 'iter')
+						) 
 				setattr(cls, '__iter__', __iter__)
 		else:
 			def __iter__(
@@ -52,7 +57,11 @@ def dunder_iter(
 					for i in iter_attr:
 						yield i 
 				else:
-					raise DunderIterError(cls, 'iterable', attr) 
+					raise DunderDecoratorException(
+						cls, 
+						'iterable', 
+						attr
+					) 
 			setattr(cls, '__iter__', __iter__)
 		return cls
 	if cls is None:
@@ -61,7 +70,8 @@ def dunder_iter(
 
 def dunder_setitem(
 		cls: Optional[Cls] = None, 
-		attr: Optional[str] = False 
+		attr: Optional[str] = False, 
+		slots: Optional[str] = None,
 ) -> Cls:
 	def wrap(
 			cls: Cls,
@@ -72,17 +82,54 @@ def dunder_setitem(
 					key: Hashable, 
 					value: Any,
 			) -> None:
-				getattr(cls, attr)[key] = value
+				if hasattr(getattr(cls, attr), '__getitem__'):
+					getattr(cls, attr)[key] = value
+				else:
+					raise DunderDecoratorException(
+						cls, 
+						'indexable', 
+						attr
+					) 
 				return
+			setattr(cls, '__setitem__', __setitem__)
 		else:
-			def __setitem__(
-					cls: Cls, 
-					key: Hashable, 
-					value: Any,
-			) -> None:
-				cls.__dict__[key] = value
-				return
-		setattr(cls, '__setitem__', __setitem__)
+			if slots is None:
+				def __setitem__(
+						cls: Cls, 
+						key: Hashable, 
+						value: Any,
+				) -> None:
+					if hasattr(cls, '__dict__'):
+						cls.__dict__[key] = value
+					else:
+						raise DunderDecoratorException('dict')
+					return
+				setattr(
+					cls, 
+					'__setitem__', 
+					__setitem__
+				)
+			else:
+				def __setitem__(
+						cls: Cls, 
+						key: str, 
+						value: Any,
+				) -> None:
+					if hasattr(cls, '__slots__'):
+						if hasattr(cls, key):
+							setattr(cls, key, value)
+						else:
+							raise DunderDecoratorException(
+								'slots_immutable'
+							)
+					else:
+						raise DunderDecoratorException('slots')
+					return
+				setattr(
+					cls, 
+					'__setitem__', 
+					__setitem__
+				)
 		return cls
 	if cls is None:
 		return wrap 

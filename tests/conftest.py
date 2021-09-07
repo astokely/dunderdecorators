@@ -17,7 +17,7 @@ def dunder_iter_no_params():
 	return dunder_iter_no_params_obj
 
 @pytest.fixture(scope='session')
-def dunder_iter_with_no_slots_error():
+def dunder_iter_with_no_slots_exception():
 
 	@dunder_iter
 	class DunderIterNoSlotsError(object):
@@ -34,12 +34,12 @@ def dunder_iter_with_no_slots_error():
 			self.b = b
 			self.c = c
 	
-	dunder_iter_no_slots_error = (
+	dunder_iter_no_slots_exception = (
 		DunderIterNoSlotsError(
 			1, 2.0, np.float64(3.0)
 		)
 	)
-	return dunder_iter_no_slots_error
+	return dunder_iter_no_slots_exception
 
 @pytest.fixture(scope='session')
 def dunder_iter_slots_no_iterable_attrs():
@@ -67,7 +67,7 @@ def dunder_iter_slots_no_iterable_attrs():
 	return dunder_iter_slots_no_iter_attrs
 
 @pytest.fixture(scope='session')
-def dunder_iter_no_slots_no_iterable_attrs_error():
+def dunder_iter_no_slots_no_iterable_attrs_exception():
 
 	@dunder_iter(slots=True)
 	class DunderIterNoSlotsNoIterableAttrs(object):
@@ -89,7 +89,7 @@ def dunder_iter_no_slots_no_iterable_attrs_error():
 	return dunder_iter_no_slots_no_iter_attrs
 
 @pytest.fixture(scope='session')
-def dunder_iter_slots_with_iterable_attrs_error():
+def dunder_iter_slots_with_iterable_attrs_exception():
 
 	@dunder_iter(attr='a')
 	class DunderIterSlotsIterableAttrs(object):
@@ -178,7 +178,7 @@ def dunder_iter_with_iterable_attrs():
 	return dunder_iter_with_iter_attrs
 
 @pytest.fixture(scope='session')
-def dunder_iter_with_no_iterable_attrs_error():
+def dunder_iter_with_no_iterable_attrs_exception():
 
 	@dunder_iter(attr='a')
 	class DunderIterNoIterableAttrsError(object):
