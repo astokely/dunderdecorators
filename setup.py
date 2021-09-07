@@ -12,8 +12,9 @@ setup(
 		"typing",
 		"pytest",
 		"numpy",
+		"cython"
 	],              
     platforms=['Linux',
                 'Unix',],
-    python_requires=">=3.8",          
+    python_requires=">=3.3",          
 )
