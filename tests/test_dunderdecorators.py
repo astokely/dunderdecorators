@@ -1,5 +1,4 @@
 import os
-import numpy as np
 import pytest
 from typing import Callable
 from dunderdecorators import dunder_iter, dunder_getitem, \
@@ -65,7 +64,7 @@ def test_dunder_iter_slots_no_iter_attrs(
 	assert attr_values == [
 		('a', 1),
 		('b', 2.0),
-		('c', np.float64(3.0))
+		('c', 3.0)
 	]
 
 def test_dunder_iter_slots_no_iter_attrs_negative1(
@@ -82,7 +81,7 @@ def test_dunder_iter_slots_no_iter_attrs_negative2(
 	attr_values = [
 		i for i in dunder_iter_slots_no_iterable_attrs
 	]
-	assert attr_values != [1, 2.0, np.float64(3.0)]
+	assert attr_values != [1, 2.0, 3.0]
 
 def test_dunder_iter_no_slots_no_iter_attrs_exception(
 		dunder_iter_no_slots_no_iterable_attrs_exception: Callable,

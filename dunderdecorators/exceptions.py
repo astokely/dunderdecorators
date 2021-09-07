@@ -1,7 +1,6 @@
 
 from collections import namedtuple
 from collections.abc import Mapping, Iterable
-import numpy as np
 from typing import Optional, TypeVar, Hashable, \
 	Dict, Iterable, Union, Tuple, List, Any, Generator
 

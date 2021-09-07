@@ -11,7 +11,6 @@ setup(
     install_requires=[
 		"typing",
 		"pytest",
-		"numpy",
 		"cython"
 	],              
     platforms=['Linux',

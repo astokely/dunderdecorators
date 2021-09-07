@@ -1,7 +1,6 @@
 import pytest
 import shutil
 import os
-import numpy as np
 from typing import List, Dict, Optional, Set, Tuple
 from dunderdecorators import dunder_iter, dunder_getitem, \
     dunder_setitem, dunder_missing, dunder_repr
@@ -28,7 +27,7 @@ def dunder_iter_with_no_slots_exception():
 				self,
 				a: int,
 				b: float,
-				c: np.float64,
+				c: float,
 		) -> None:
 			self.a = a
 			self.b = b
@@ -36,7 +35,7 @@ def dunder_iter_with_no_slots_exception():
 	
 	dunder_iter_no_slots_exception = (
 		DunderIterNoSlotsError(
-			1, 2.0, np.float64(3.0)
+			1, 2.0, 3.0
 		)
 	)
 	return dunder_iter_no_slots_exception
@@ -53,7 +52,7 @@ def dunder_iter_slots_no_iterable_attrs():
 				self,
 				a: int,
 				b: float,
-				c: np.float64,
+				c: float,
 		) -> None:
 			self.a = a
 			self.b = b
@@ -61,7 +60,7 @@ def dunder_iter_slots_no_iterable_attrs():
 	
 	dunder_iter_slots_no_iter_attrs = (
 		DunderIterSlotsNoIterableAttrs(
-			1, 2.0, np.float64(3.0)
+			1, 2.0, 3.0
 		)
 	)
 	return dunder_iter_slots_no_iter_attrs
@@ -75,7 +74,7 @@ def dunder_iter_no_slots_no_iterable_attrs_exception():
 				self,
 				a: int,
 				b: float,
-				c: np.float64,
+				c: float,
 		) -> None:
 			self.a = a
 			self.b = b
@@ -83,7 +82,7 @@ def dunder_iter_no_slots_no_iterable_attrs_exception():
 	
 	dunder_iter_no_slots_no_iter_attrs = (
 		DunderIterNoSlotsNoIterableAttrs(
-			1, 2.0, np.float64(3.0)
+			1, 2.0, 3.0
 		)
 	)
 	return dunder_iter_no_slots_no_iter_attrs
