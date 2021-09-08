@@ -14,6 +14,7 @@ print(f)
 
 setup(
     name='dunderdecorators',
+    version="1.0.0",
 	description=description,
 	long_description=long_description,
 	url='https://github.com/astokely/dunderdecorators',
