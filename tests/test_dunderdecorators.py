@@ -422,16 +422,18 @@ def test_dunder_setitem_indexing_with_slots_exception():
 def test_dunder_setitem_indexing_with_slots_and_iterable_attr_exception():
 	@dunder_setitem(attr='a')
 	class Test(object):
-		__slots__ = ('a', 'b',)
+		__slots__ = ('a', 'b', 'c',)
 
 		def __init__(
 				self,
 				a: int,
 				b: List,
+				c: List,
 		) -> None:
 			self.a = a
 			self.b = b
-	test = Test(1, [1, 2, 3])
+			self.c = c
+	test = Test(1, [1, 2, 3], [4, 5, 6])
 	exception_key_words = [
 		'Attribute',
 		'belonging',
@@ -442,6 +444,7 @@ def test_dunder_setitem_indexing_with_slots_and_iterable_attr_exception():
 		'slots',
 		'list',
 		'provided',
+		'[\'b\', \'c\']',
 	]
 	exception_null_key_words = [
 		'parameters',
@@ -456,7 +459,184 @@ def test_dunder_setitem_indexing_with_slots_and_iterable_attr_exception():
 	for key_word in exception_null_key_words:
 		assert key_word not in str(exception_info.value)
 
+def test_dunder_key_not_hashable_exception():
+	@dunder_setitem(attr='a')
+	class Test(object):
 
+		def __init__(
+				self,
+				a: Dict,
+		) -> None:
+			self.a = a
+	test = Test({'a' : 1})
+	exception_key_words = [
+		'Provided',
+		'is',
+		'of',
+		'type',
+		'not',
+		'hashable',
+	]
+	with pytest.raises(DunderDecoratorException) as exception_info:
+		test[[1, 2, 3]] = 3
+	assert exception_info.value.message == 'key_not_hashable'
+	for key_word in exception_key_words:
+		assert key_word in str(exception_info.value)
+
+def test_dunder_setitem_dict_exception():
+	@dunder_setitem
+	class Test(object):
+		__slots__ = ('a',)
+		def __init__(
+				self,
+				a: Dict,
+		) -> None:
+			self.a = a
+	test = Test({'a' : 1})
+	exception_key_words = [
+		'has',
+		'no',
+		'attribute',
+		'__dict__',
+		'Consider',
+		'slots',
+		'True',
+	]
+	with pytest.raises(DunderDecoratorException) as exception_info:
+		test['a'] = [1, 2, 3]
+	assert exception_info.value.message == ('dict', 'setitem')
+	for key_word in exception_key_words:
+		assert key_word in str(exception_info.value)
+
+def test_dunder_setitem_slots_exception():
+	@dunder_setitem(slots=True)
+	class Test(object):
+		def __init__(
+				self,
+				a: Dict,
+		) -> None:
+			self.a = a
+	test = Test({'a' : 1})
+	exception_key_words = [
+		'parameters',
+		'Consider',
+		'__slots__',
+	]
+	with pytest.raises(DunderDecoratorException) as exception_info:
+		test['a'] = [1, 2, 3]
+	assert exception_info.value.message == ('slots', 'setitem')
+	for key_word in exception_key_words:
+		assert key_word in str(exception_info.value)
+
+def test_dunder_getitem_dict_exception():
+	@dunder_getitem
+	class Test(object):
+		__slots__ = ('a',)
+		def __init__(
+				self,
+				a: Dict,
+		) -> None:
+			self.a = a
+	test = Test({'a' : 1})
+	exception_key_words = [
+		'has',
+		'no',
+		'attribute',
+		'Consider',
+		'__dict__',
+	]
+	with pytest.raises(DunderDecoratorException) as exception_info:
+		x = test['a']
+	assert exception_info.value.message == ('dict', 'getitem')
+	for key_word in exception_key_words:
+		assert key_word in str(exception_info.value)
+
+def test_dunder_getitem():
+	@dunder_getitem
+	class Test(object):
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+	test = Test(1, 2, 3)
+	assert (
+		[test['a'], test['b'], test['c']] ==
+		[1, 2, 3]
+	)
+
+def test_dunder_getitem_slots():
+	@dunder_getitem(slots=True)
+	class Test(object):
+		__slots__ = ('a', 'b', 'c')
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+	test = Test(1, 2, 3)
+	assert (
+		[test['a'], test['b'], test['c']] ==
+		[1, 2, 3]
+	)
+
+def test_dunder_getitem_with_attr():
+	@dunder_getitem(attr='a')
+	class Test(object):
+		def __init__(
+				self,
+				a: List,
+		) -> None:
+			self.a = a
+	test = Test([1, 2, 3])
+	assert (
+		[test[0], test[1], test[2]] ==
+		[1, 2, 3]
+	)
+
+def test_dunder_getitem_slots():
+	@dunder_getitem(slots=True)
+	class Test(object):
+		__slots__ = ('a', 'b', 'c')
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+	test = Test(1, 2, 3)
+	assert (
+		[test['a'], test['b'], test['c']] ==
+		[1, 2, 3]
+	)
+		
+def test_dunder_missing():
+	@dunder_getitem
+	@dunder_missing(default_value=1.0)
+	class Test(object):
+		def __init__(
+				self,
+				a: int,
+				b: int,
+				c: int,
+		) -> None:
+			self.a = a
+			self.b = b
+			self.c = c
+	test = Test(1, 2, 3)
+	test['d']
+	assert test.d == 1.0 
 
 
 

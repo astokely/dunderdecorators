@@ -122,7 +122,7 @@ def dunder_setitem(
 						raise DunderDecoratorException(
 							cls, 
 							'key_not_hashable', 
-							key=key	
+							key
 						)
 					return
 				setattr(
@@ -206,12 +206,35 @@ def dunder_getitem(
 						key,
 						Hashable
 					): 
-						if key in getattr(cls, attr).keys():
-							return getattr(cls, attr)[key]
+						if hasattr(cls, '__dict__'):
+							if isinstance(
+								getattr(cls, attr), 
+								Hashable
+							):
+								if key in getattr(cls, attr):
+									return getattr(cls, attr)[key]
+								else:
+									raise DunderDecoratorException(
+										cls, 
+										'key_not_found', 
+										attr
+									)
+							elif isinstance(
+								getattr(cls, attr), 
+								Iterable	
+							):
+								if key < len(getattr(cls, attr)):
+									return getattr(cls, attr)[key]
+								else:
+									raise DunderDecoratorException(
+										cls, 
+										'index_out_of_bounds', 
+										attr
+									)
 						else:
 							raise DunderDecoratorException(
-								cls, 
-								'key_not_found', 
+								cls,
+								('dict', 'getitem'),
 								attr
 							)
 					else:

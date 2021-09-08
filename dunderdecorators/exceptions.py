@@ -363,6 +363,10 @@ class DunderDecoratorException(Exception):
 				+ f'{self.cls_obj_name_and_addr}\'s attribute '
 				+ f'{self.attr}\'s keys.\n{keys}' 
 			)
+		elif self.message == 'index_out_of_bounds':
+			message = (
+				f'Provided index is out of bounds.'			
+			)
 		elif self.message == 'missing_with_slots':
 			message = (
 				f'Cannot decorate a class that '
