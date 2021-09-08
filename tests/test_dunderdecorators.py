@@ -602,6 +602,85 @@ def test_dunder_getitem_with_attr():
 		[1, 2, 3]
 	)
 
+def test_dunder_setitem_with_iterable_attr():
+	@dunder_getitem(attr='a')
+	@dunder_setitem(attr='a')
+	class Test(object):
+		def __init__(
+				self,
+				a: List,
+		) -> None:
+			self.a = a
+	test = Test([1, 2, 3])
+	test[0] = 3
+	test[1] = 2
+	test[2] = 1
+
+	assert (
+		[test[0], test[1], test[2]] ==
+		[3, 2, 1]
+	)
+
+def test_dunder_setitem_with_iterable_attr_append():
+	@dunder_setitem(attr='a')
+	@dunder_getitem(attr='a')
+	class Test(object):
+		def __init__(
+				self,
+				a: List,
+		) -> None:
+			self.a = a
+	test = Test([1, 2, 3])
+	test[0] = 3
+	test[1] = 2
+	test[2] = 1
+	test[3] = 0
+
+	assert (
+		[test[0], test[1], test[2], test[3]] ==
+		[3, 2, 1, 0]
+	)
+
+
+def test_dunder_setitem_with_iterable_attr_append_left():
+	@dunder_setitem(attr='a')
+	@dunder_getitem(attr='a')
+	class Test(object):
+		def __init__(
+				self,
+				a: List,
+		) -> None:
+			self.a = a
+	test = Test([1, 2, 3])
+	test[0] = 3
+	test[1] = 2
+	test[2] = 1
+	test[-6] = 6
+
+	assert (
+		[test[0], test[1], test[2], test[3]] ==
+		[6, 3, 2, 1]
+	)
+def test_dunder_setitem_with_iterable_attr_append_left_negative():
+	@dunder_setitem(attr='a')
+	@dunder_getitem(attr='a')
+	class Test(object):
+		def __init__(
+				self,
+				a: List,
+		) -> None:
+			self.a = a
+	test = Test([1, 2, 3])
+	test[-6] = 6
+	test[0] = 3
+	test[1] = 2
+	test[2] = 1
+
+	assert (
+		[test[0], test[1], test[2], test[3]] ==
+		[3, 2, 1, 3]
+	)
+
 def test_dunder_getitem_slots():
 	@dunder_getitem(slots=True)
 	class Test(object):

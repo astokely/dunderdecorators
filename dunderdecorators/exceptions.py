@@ -30,7 +30,6 @@ class DunderDecoratorException(Exception):
 					self.cls_obj, self.attr
 			).__class__.__name__ 
 			iterable_attrs = []
-			message = ''
 			message = (
 				f'\n\nAttribute "{self.attr}" belonging to '
 				+ f'{self.cls_obj_name_and_addr} is\n'
@@ -264,6 +263,17 @@ class DunderDecoratorException(Exception):
 						+ f'indexable \nattributes is provided below.\n'
 						+ f'{indexable_attrs}'
 					)
+		elif self.message == ('attr_not_mapping_or_iterable'):
+			attr_type = getattr(
+					self.cls_obj, self.attr
+			).__class__.__name__ 
+			message = (
+				f'attr must be the name of an attribute owned\n'
+				+ f'by {self.cls_obj_name_and_addr} that is\n'
+				+ f'mapping or iterable. Currently, attr is '
+				+ f'set to {self.attr},\nwhich is of type'
+				+ f'{attr_type}.'
+			)
 		elif self.message == ('slots', 'getitem'):
 			message = (
 				f'\n{self.cls_obj_name_and_addr} '
@@ -297,7 +307,7 @@ class DunderDecoratorException(Exception):
 			)
 			if hasattr(self.cls_obj, '__dict__'):
 				message += (
-					f'\nConsider using dunder_setitem without '
+					f'\nConsider using dunder_repr without '
 					+ f'any parameters, which will define __repr__\n'
 					+ f'with repsect to '
 					+ f'{self.cls_obj_name_and_addr}\'s __dict__.'

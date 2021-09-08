@@ -85,8 +85,55 @@ def dunder_setitem(
 					key,
 					Hashable
 				): 
-					if hasattr(getattr(cls, attr), '__getitem__'):
-						getattr(cls, attr)[key] = value
+					if hasattr(
+						getattr(cls, attr), 
+						'__getitem__'
+					):
+						if isinstance(
+							getattr(cls, attr), 
+							Mapping
+						):
+							print(True)
+							getattr(cls, attr)[key] = value
+
+						elif isinstance(
+							getattr(cls, attr), 
+							Iterable	
+						):
+							attr_size = len(
+								getattr(cls, attr)
+							) 
+							if key >= 0:
+								if key < attr_size:
+									getattr(cls, attr)[key] = value
+								else:
+									tmp_iterable = [
+										getattr(cls, attr)[i]
+										if i < attr_size else
+										0 for i in range(attr_size + 1)
+									]
+									tmp_iterable[-1] = value	
+									setattr(cls, attr, tmp_iterable)
+							else:
+								abs_index = attr_size + key
+								if abs_index >= 0:
+									getattr(cls, attr)[abs_index] = (
+										value
+									)
+								else:
+									tmp_iterable = [
+										0 if i == 0 
+										else getattr(cls, attr)[i-1]
+										for i in range(attr_size + 1)
+									]	
+									tmp_iterable[0] = value	
+									setattr(cls, attr, tmp_iterable)
+						else:
+							raise DunderDecoratorException(
+								cls, 
+								'attr_not_mapping_or_iterable', 
+								attr
+							)
 					else:
 						raise DunderDecoratorException(
 							cls, 
@@ -206,37 +253,30 @@ def dunder_getitem(
 						key,
 						Hashable
 					): 
-						if hasattr(cls, '__dict__'):
-							if isinstance(
-								getattr(cls, attr), 
-								Hashable
-							):
-								if key in getattr(cls, attr):
-									return getattr(cls, attr)[key]
-								else:
-									raise DunderDecoratorException(
-										cls, 
-										'key_not_found', 
-										attr
-									)
-							elif isinstance(
-								getattr(cls, attr), 
-								Iterable	
-							):
-								if key < len(getattr(cls, attr)):
-									return getattr(cls, attr)[key]
-								else:
-									raise DunderDecoratorException(
-										cls, 
-										'index_out_of_bounds', 
-										attr
-									)
-						else:
-							raise DunderDecoratorException(
-								cls,
-								('dict', 'getitem'),
-								attr
-							)
+						if isinstance(
+							getattr(cls, attr), 
+							Mapping
+						):
+							if key in getattr(cls, attr):
+								return getattr(cls, attr)[key]
+							else:
+								raise DunderDecoratorException(
+									cls, 
+									'key_not_found', 
+									attr
+								)
+						elif isinstance(
+							getattr(cls, attr), 
+							Iterable	
+						):
+							if key < len(getattr(cls, attr)):
+								return getattr(cls, attr)[key]
+							else:
+								raise DunderDecoratorException(
+									cls, 
+									'index_out_of_bounds', 
+									attr
+								)
 					else:
 						raise DunderDecoratorException(
 							cls, 
