@@ -2,7 +2,7 @@ from dunderdecorators import dunder_iter, dunder_setitem, \
 	dunder_getitem, dunder_missing, dunder_repr, \
 	DunderDecoratorException
 import pytest
-from typing import List, Dict
+from typing import List, Dict, Set
 
 def test_dunder_iter():
 	@dunder_iter
@@ -224,6 +224,36 @@ def test_dunder_setitem_with_non_mapping_attr():
 		test.a == 
 		[3, 2, 1]
 	)
+
+def test_dunder_setitem_with_attr_set():
+	@dunder_setitem(attr='a')
+	class Test(object):
+
+		def __init__(
+				self,
+				a: Set,
+		) -> None:
+			self.a = a
+
+	with pytest.raises(DunderDecoratorException) as exception_info:
+		test = Test(set([1, 2, 3]))
+		test[0] = 5
+	assert exception_info.value.message == 'indexable'
+
+def test_dunder_getitem_with_attr_set():
+	@dunder_getitem(attr='a')
+	class Test(object):
+
+		def __init__(
+				self,
+				a: Set,
+		) -> None:
+			self.a = a
+
+	with pytest.raises(DunderDecoratorException) as exception_info:
+		test = Test(set([1, 2, 3]))
+		print(test[0])
+	assert exception_info.value.message == 'indexable'
 
 def test_dunder_iter_with_mapping_attr():
 	@dunder_setitem(attr='a')

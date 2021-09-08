@@ -253,30 +253,40 @@ def dunder_getitem(
 						key,
 						Hashable
 					): 
-						if isinstance(
+						if hasattr(
 							getattr(cls, attr), 
-							Mapping
+							'__getitem__'
 						):
-							if key in getattr(cls, attr):
-								return getattr(cls, attr)[key]
-							else:
-								raise DunderDecoratorException(
-									cls, 
-									'key_not_found', 
-									attr
-								)
-						elif isinstance(
-							getattr(cls, attr), 
-							Iterable	
-						):
-							if key < len(getattr(cls, attr)):
-								return getattr(cls, attr)[key]
-							else:
-								raise DunderDecoratorException(
-									cls, 
-									'index_out_of_bounds', 
-									attr
-								)
+							if isinstance(
+								getattr(cls, attr), 
+								Mapping
+							):
+								if key in getattr(cls, attr):
+									return getattr(cls, attr)[key]
+								else:
+									raise DunderDecoratorException(
+										cls, 
+										'key_not_found', 
+										attr
+									)
+							elif isinstance(
+								getattr(cls, attr), 
+								Iterable	
+							):
+								if key < len(getattr(cls, attr)):
+									return getattr(cls, attr)[key]
+								else:
+									raise DunderDecoratorException(
+										cls, 
+										'index_out_of_bounds', 
+										attr
+									)
+						else:
+							raise DunderDecoratorException(
+								cls, 
+								'indexable', 
+								attr
+							) 
 					else:
 						raise DunderDecoratorException(
 							cls, 
